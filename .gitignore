@@ -1,2 +1,5 @@
-*.o
-hellomake
+*
+!*.c
+!*.h
+!Makefile
+!*/

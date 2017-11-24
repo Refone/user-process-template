@@ -21,8 +21,9 @@ int main(int argc, char** argv){
     const int on=1;
     unsigned short srcport;
 
-    if(argc!=2)
+    if(argc!=4)
     {
+        //printf("argc=%d\n",argc);
         printf("Usage:%s target dstport srcport\n",argv[0]);
         exit(1);
     }
