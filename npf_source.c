@@ -12,19 +12,15 @@
 
 #include <signal.h>    
 
-/**  
-  关于 sockaddr  sockaddr_in  socketaddr_un说明  
-http://maomaozaoyue.blog.sohu.com/197538359.html  
-*/    
-
 #define PORT    11910   //定义通信端口    
-#define BACKLOG 5       //定义侦听队列长度    
+#define BACKLOG 8       //定义侦听队列长度    
 #define buflen  1024    
 
 void process_conn_server(int s);    
-void sig_pipe(int signo);    
+char* get_page_content(char *addr);
 
 int ss,sc;  //ss为服务器socket描述符，sc为某一客户端通信socket描述符    
+char content[4096];
 
 int main(int argc,char *argv[])    
 {    
@@ -36,23 +32,14 @@ int main(int argc,char *argv[])
     pid_t pid;  //分叉进行的ID    
 
     /*****************socket()***************/    
-    ss = socket(AF_INET,SOCK_STREAM,0); //建立一个序列化的，可靠的，双向连接的的字节流    
+    ss = socket(AF_INET,SOCK_STREAM,0); 
+    //建立一个序列化的，可靠的，双向连接的的字节流    
+    
     if(ss<0)    
     {    
         printf("server : server socket create error\n");    
         return -1;    
     }    
-    //注册信号    
-    //sighandler_t ret;    
-    //ret = signal(SIGTSTP,sig_pipe);    
-    //if(SIG_ERR == ret)    
-    //{    
-    //    printf("信号挂接失败\n");    
-    //    return -1;    
-    //}    
-    //else    
-    //    printf("信号挂接成功\n");    
-
 
     /******************bind()****************/    
     //初始化地址结构    
@@ -70,7 +57,7 @@ int main(int argc,char *argv[])
     }    
 
     /*****************listen()***************/    
-    err = listen(ss,BACKLOG);   //设置监听的队列大小    
+    err = listen(ss, BACKLOG);   //设置监听的队列大小    
     if(err < 0)    
     {    
         printf("server : listen error\n");    
@@ -92,7 +79,10 @@ int main(int argc,char *argv[])
     {    
         socklen_t addrlen = sizeof(client_addr);    
         //accept返回客户端套接字描述符    
-        sc = accept(ss,(struct sockaddr *)&client_addr,&addrlen);  //注，此处为了获取返回值使用 指针做参数    
+        
+        sc = accept(ss,(struct sockaddr *)&client_addr,&addrlen);  
+        //注，此处为了获取返回值使用 指针做参数    
+        
         if(sc < 0)  //出错    
         {    
             continue;   //结束此次循环    
@@ -103,18 +93,21 @@ int main(int argc,char *argv[])
         }    
 
         //创建一个子线程，用于与客户端通信    
-        pid = fork();    
+        //pid = fork();    
         //fork 调用说明：子进程返回 0 ；父进程返回子进程 ID    
-        if(pid == 0)        //子进程，与客户端通信    
-        {    
-            close(ss);    
-            process_conn_server(sc);    
-        }    
-        else    
-        {    
-            close(sc);    
-        }    
+        //if(pid == 0)        //子进程，与客户端通信    
+        //{    
+        //    close(ss);    
+        //    process_conn_server(sc);    
+        //}    
+        //else    
+        //{    
+        //    close(sc);    
+        //}    
+
+        process_conn_server(sc);
     }    
+
 }    
 
 /**  
@@ -126,42 +119,37 @@ int main(int argc,char *argv[])
 void process_conn_server(int s)    
 {    
     ssize_t size = 0;    
-    char buffer[buflen];
+    char page_address[8];
+    char page_content[4096];
+
     //定义数据缓冲区    
     for(;;)    
     {    
         //等待读    
-        for(size = 0; size == 0; size = read(s,buffer,buflen));    
+        for(size = 0; size == 0; size = read(s, page_address, 8));    
         //输出从客户端接收到的数据    
-        printf("%s",buffer);    
+        write(1, page_address, 8);
+        //write(1, "\n", 1);
 
         //结束处理    
-        if(strcmp(buffer,"quit")==0)    
+        if(strcmp(page_address,"quit")==0)    
         {    
             close(s);
             //成功返回0，失败返回-1    
             return;    
         }    
-        sprintf(buffer,"%d bytes altogether\n", size);    
-        write(s,buffer,strlen(buffer)+1);    
-    }    
-}    
-//void sig_pipe(int signo)    
-//{    
-//    printf("catch a signal\n");    
-//    if(signo == SIGTSTP)    
-//    {    
-//        printf("接收到SIGTSTP信号\n");    
-//        int ret1 = close(ss);    
-//        int ret2 = close(sc);    
-//        int ret = ret1>ret2?ret1:ret2;    
-//        if(ret == 0)    
-//            printf("成功:关闭套接字\n");    
-//        else
-//            if(ret ==-1)    
-//                printf("失败:未关闭套接字\n");    
-//
-//        exit(1);    
-//    }    
-//}
 
+        sprintf(page_content, get_page_content(page_address), 4096);
+        write(s, page_content, 4096);
+    }    
+}
+
+char* get_page_content(char *addr)
+{
+    int i;
+    for (i=0; i<4096; i+=8) {
+        strncpy(&content[i], addr, 8);
+    }
+
+    return content;
+}

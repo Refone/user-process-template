@@ -20,3 +20,13 @@ tcp_c: $(TCP_C_OBJ)
 tcp:
 	make tcp_s
 	make tcp_c
+
+npf_source: npf_source.o
+	gcc -o $@ $^ $(CFLAGS)
+
+npf_target: npf_target.o
+	gcc -o $@ $^ $(CFLAGS)
+
+npf:
+	make npf_source
+	make npf_target
