@@ -30,3 +30,8 @@ npf_target: npf_target.o
 npf:
 	make npf_source
 	make npf_target
+
+.PHONY: clean
+
+clean:
+	rm -f *.o npf_source npf_target tcp_s tcp_c hellomake
