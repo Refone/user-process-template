@@ -4,6 +4,9 @@
 #include <sys/mman.h>
 
 #define MMAP_NUM 100
+#define PAGE_NUM 100
+#define PAGE_SIZE 4096
+
 char data[20] = "@@@@@@@@@@@@@@@@@@@@";
 
 char *filename(int i)
@@ -23,7 +26,7 @@ int main()
     FILE *fp[MMAP_NUM];
     void *p[MMAP_NUM];
 
-    p[0] = mmap((void *)0x600000000000, 409600, PROT_READ | PROT_WRITE, MAP_FIXED | MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    p[0] = mmap((void *)0x600000000000, PAGE_SIZE * PAGE_NUM, PROT_READ | PROT_WRITE, MAP_FIXED | MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
    
     printf("address:[%lx]\n", (unsigned long)(p[0]));
     //for (i=0; i<MMAP_NUM; i++) {
@@ -40,23 +43,23 @@ int main()
    
     unsigned long add = (unsigned long)(p[0]);
 
-    for (i=0; i<100; i++) {
+    for (i=0; i<PAGE_NUM; i++) {
         printf("%lx\n", add);
-        *((int *)add) = 0x12345678;
-        add += 4096;
+        *((int *)add) = i;
+        add += PAGE_SIZE;
     }
 
     add = (unsigned long)(p[0]);
 
-    for (i=0; i<100; i++) {
-        volatile int num;
-        printf("%lx\n", add);
-        num = *((int *)add);
-        if (num != 0x12345678) {printf("WTF!!!\n");}
-        add += 4096;
-    }
+    //for (i=0; i<100; i++) {
+    //    volatile int num;
+    //    printf("%lx\n", add);
+    //    num = *((int *)add);
+    //    if (num != 0x12345678) {printf("WTF!!!\n");}
+    //    add += 4096;
+    //}
 
-    munmap((void *)0x600000000000, 409600);
+    munmap((void *)0x600000000000, PAGE_SIZE * PAGE_NUM);
 
     printf("Module End.\n");
 
