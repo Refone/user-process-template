@@ -1,7 +1,1 @@
-*
-!*.c
-!Makfile
-!*.h
-
-!hello/
-!timer/
+*.o
