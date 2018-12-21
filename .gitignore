@@ -2,3 +2,6 @@
 !*.c
 !Makfile
 !*.h
+
+!hello
+!timer
