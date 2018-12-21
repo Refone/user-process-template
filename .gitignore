@@ -1,2 +1,4 @@
-*.o
-hellomake
+*
+!*.c
+!Makfile
+!*.h
